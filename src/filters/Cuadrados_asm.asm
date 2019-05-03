@@ -1,7 +1,9 @@
 
 section .rodata
-mask: db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00
+mask: db 0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+maskzeros: db 0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF
 masktest: dq 0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF
+maskzero: db 0x0000000000000000,0x0000000000000000
 str: db 'paso',10,0
 
 section .text
@@ -127,7 +129,7 @@ Cuadrados_asm:
             movdqu xmm1,xmm0
             pslldq xmm1,12                   ;xmm1: max(max2,max4) | ~ | ~ | ~ 
             pmaxub xmm0,xmm1                 ;xmm0: max(max(max2,max4) , max(max1,max3)) | ~ | ~ | ~
-            ;por xmm0,[mask]
+            por xmm0,[mask]
             psrldq xmm0,12
             map r12,rbx,r13,r15
             movd [rsi+r15],xmm0                              
@@ -138,6 +140,70 @@ Cuadrados_asm:
         inc r12
         jmp .loop_i
     .fin_i:
+
+    mov r12,0                                ;r12 es k
+    .loop_k:
+    	cmp r12,4
+    	je .fin_k
+    	mov rbx,0                            ;rbx es l 
+    		.loop_l:
+    			cmp rbx,r13
+    			je .fin_l
+
+    			map r12,rbx,r13,r15
+    			movdqu xmm0,[maskzeros]
+    			movdqu [rsi+r15],xmm0
+
+    			add rbx,4
+    			jmp .loop_l
+    		.fin_l:
+    	inc r12
+    	jmp .loop_k
+    .fin_k:
+
+    mov r12,0                                ;r12 es 'i' desde 0
+    .loop_m:
+    	cmp r12,r10                          ;r10 es height -4
+    	je .fin_m
+ 		map r12,r11,r13,r15                  ;m['i'][with-4]
+		movdqu xmm0,[maskzeros]
+		movdqu [rsi+r15],xmm0
+    	inc r12
+    	jmp .loop_m
+    .fin_m:
+
+    mov r12,r10                                ;r12 es 'i'
+    .loop_n:
+    	cmp r12,rcx
+    	je .fin_n
+    	mov rbx,0                            ;rbx es l 
+    		.loop_o
+    			cmp rbx,r13
+    			je .fin_o
+
+    			map r12,rbx,r13,r15
+    			movdqu xmm0,[maskzeros]
+    			movdqu [rsi+r15],xmm0
+
+    			add rbx,4
+    			jmp .loop_o
+    		.fin_o:
+    	inc r12
+    	jmp .loop_n
+    .fin_n:
+
+    mov r12,4                                ;r12 es 'i' desde 0
+    .loop_p:
+    	cmp r12,r10                          ;r10 es height -4
+    	je .fin_p
+    	mov r11,0
+ 		map r12,r11,r13,r15                  ;m['i'][with-4]
+		movdqu xmm0,[maskzeros]
+		movdqu [rsi+r15],xmm0
+    	inc r12
+    	jmp .loop_p
+    .fin_p:
+
 
     pop r15
     pop r14
