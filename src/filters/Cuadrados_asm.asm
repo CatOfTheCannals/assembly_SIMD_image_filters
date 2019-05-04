@@ -127,7 +127,7 @@ Cuadrados_asm:
             pslldq xmm1,8                    ;xmm1: max3 | max4 |   0  |   0
             pmaxub xmm0,xmm1                 ;xmm0: max(max1,max3) | max(max2,max4) |  ~  |  ~  
             movdqu xmm1,xmm0
-            pslldq xmm1,12                   ;xmm1: max(max2,max4) | ~ | ~ | ~ 
+            pslldq xmm1,4                    ;xmm1: max(max2,max4) | ~ | ~ | ~ 
             pmaxub xmm0,xmm1                 ;xmm0: max(max(max2,max4) , max(max1,max3)) | ~ | ~ | ~
             por xmm0,[mask]
             psrldq xmm0,12
