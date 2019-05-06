@@ -122,7 +122,7 @@ Sharpen_asm:
 
             paddusw xmm7, xmm8 ; ==> hmm7_low = suma(pixeles_que_no_son_el_central)
 
-            pmul xmm5, [centro_izq_por_9] ; ==> xmm5_low = pixel_central_izquierdo * 9
+            pmullw xmm5, [centro_izq_por_9] ; ==> xmm5_low = pixel_central_izquierdo * 9
 
             psubusw xmm5, xmm7 ; xmm5_low = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
@@ -156,7 +156,7 @@ Sharpen_asm:
 
             paddusw xmm7, xmm8 ; ==> hmm7_high = suma(pixeles_que_no_son_el_central)
 
-            pmul xmm1, [centro_der_por_9] ; ==> xmm1_high = pixel_central_derecho * 9
+            pmullw xmm1, [centro_der_por_9] ; ==> xmm1_high = pixel_central_derecho * 9
 
             psubusw xmm1, xmm7 ; xmm1_high = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
@@ -166,7 +166,7 @@ Sharpen_asm:
             ; ----- escribir ambos pixeles en memoria -----
 
             ; empaquetar el resultado a bytes
-            pckuswb xmm1, xmm5 ; xmm1 = | basura | pixel_izq | pixel_der | basura |
+            packuswb xmm1, xmm5 ; xmm1 = | basura | pixel_izq | pixel_der | basura |
 
 
             dec r9 ; apuntar a i a fila del medio
