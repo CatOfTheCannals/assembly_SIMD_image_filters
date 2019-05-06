@@ -1,0 +1,4 @@
+./src/Makefile
+./src/filters/Makefile
+./src/helper/Makefile
+*Makefile
