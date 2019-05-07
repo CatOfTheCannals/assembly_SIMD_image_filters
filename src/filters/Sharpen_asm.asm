@@ -2,7 +2,6 @@ section .rodata
 centro_izq_por_9: dw 0x0000,0x0000,0x0000,0x0000,0x0009,0x0009,0x0009,0x0000
 centro_der_por_9: dw 0x0009,0x0009,0x0009,0x0000,0x0000,0x0000,0x0000,0x0000
 
-poner_alpha_en_cero: dw  0xffff,0xffff,0xffff,0x0000,0xffff,0xffff,0xffff,0x0000
 alphas_saturados: dw  0x0000,0x0000,0x0000,0x00ff,0x0000,0x0000,0x0000,0x00ff
 
 section .text
@@ -44,23 +43,23 @@ Sharpen_asm:
     push r15
 
 	;rsi dst matriz
-	;rdi src matriz
-	;edx width en pixeles
-	;ecx height
-	;r8d es src row size
-	;r9d es dst row size
-	mov r10, rcx ; r10 es height
-	sub r10, 3
-	mov r11, rdx ; r11 es width
-	mov r13, rdx ; uso r13 para la macro, pues usa rdx
-	sub r11, 4
-	mov r12, 0 ; r12 es i
+    ;rdi src matriz
+    ;edx width en pixeles
+    ;ecx height
+    ;r8d es src row size
+    ;r9d es dst row size
+    mov r10, rcx ; r10 es height
+    sub r10, 3
+    mov r11, rdx ; r11 es width
+    mov r13, rdx ; uso r13 para la macro, pues usa rdx
+    sub r11, 4
+    mov r12, 0 ; r12 es i
     .loop_i:
-        cmp r12,r10
+        cmp r12, r10 ; i == 637 ; ojo este numero esta jarcodeado
         je .fin_i
-        mov rbx,1 ; rbx es j
+        mov rbx, 0 ; rbx es j
         .loop_j:
-            cmp rbx,r11
+            cmp rbx,r11 ; j == 1020 ; ojo este numero esta jarcodeado
             je .fin_j
 
             ; leer primera fila: xmm0 = src[i][j:j+4]
@@ -114,19 +113,22 @@ Sharpen_asm:
             paddusw xmm8, xmm2
 
             ; xmm8_high += src[i+1][j]
-            paddusw xmm8, xmm4
+            paddusw xmm8, xmm5
 
             ; pisamos la parte baja de xmm8 con su parte alta
             psrldq xmm8, 8
 
             paddusw xmm7, xmm8 ; ==> hmm7_low = suma(pixeles_que_no_son_el_central)
+            pslldq xmm7, 8
 
-            pmullw xmm5, [centro_izq_por_9] ; ==> xmm5_low = pixel_central_izquierdo * 9
+            movdqu xmm10, [centro_izq_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
+            movdqu xmm11, xmm5
+            pmullw xmm11, xmm10 ; ==> xmm5_low = pixel_central_izquierdo * 9
 
-            psubusw xmm5, xmm7 ; xmm5_low = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
+            psubusw xmm11, xmm7 ; xmm5_low = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
-            pand xmm5, [poner_alpha_en_cero]
-            paddusw xmm5, [alphas_saturados]
+            movdqu xmm10, [alphas_saturados]
+            paddusw xmm11, xmm10
 
             ; ----- segundo pixel -----
 
@@ -154,28 +156,31 @@ Sharpen_asm:
             pslldq xmm8, 8
 
             paddusw xmm7, xmm8 ; ==> hmm7_high = suma(pixeles_que_no_son_el_central)
+            psrldq xmm7, 8
 
-            pmullw xmm1, [centro_der_por_9] ; ==> xmm1_high = pixel_central_derecho * 9
+            movdqu xmm10, [centro_der_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
+            pmullw xmm1, xmm10 ; ==> xmm1_high = pixel_central_derecho * 9
 
             psubusw xmm1, xmm7 ; xmm1_high = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
-            pand xmm1, [poner_alpha_en_cero]
-            paddusw xmm1, [alphas_saturados]
+            movdqu xmm10, [alphas_saturados]
+            paddusw xmm1, xmm10
 
             ; ----- escribir ambos pixeles en memoria -----
 
             ; empaquetar el resultado a bytes
-            packuswb xmm1, xmm5 ; xmm1 = | basura | pixel_izq | pixel_der | basura |
 
+            packuswb xmm11, xmm1 ; xmm5 = | basura | pixel_izq | pixel_der | basura |
+
+            psrldq xmm11, 4 ; TODO: verificar que el right pisa lo que yo veo a la izq
 
             dec r9 ; apuntar a i a fila del medio
             inc rbx ; apuntar a j a segunda columna
             map r9,rbx,r13,r15
 
             ; dest[i+1][j+1] = pixel_izq
-            ; dest[i+1][j+2] = pixel_der
-            pextrd dword [rsi+r15], xmm1, 4 ; TODO: el offset es desde el high o desde el low?
 
+            pextrq qword [rsi+r15], xmm11, 0
 
             inc rbx ; volver a incrementar j, ya que insertamos 2 pixeles por loop
             jmp .loop_j
