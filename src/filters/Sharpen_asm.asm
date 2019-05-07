@@ -119,13 +119,15 @@ Sharpen_asm:
             psrldq xmm8, 8
 
             paddusw xmm7, xmm8 ; ==> hmm7_low = suma(pixeles_que_no_son_el_central)
-            pslldq xmm7, 8
+
 
             movdqu xmm10, [centro_izq_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
             movdqu xmm11, xmm5
-            pmullw xmm11, xmm10 ; ==> xmm5_low = pixel_central_izquierdo * 9
+            pmullw xmm11, xmm10 ; ==> xmm11_low = pixel_central_izquierdo * 9
 
-            psubusw xmm11, xmm7 ; xmm5_low = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
+            ; TODO: entender por que este shift es necesario (por algun motivo xmm11 queda con el valor en el high)
+            pslldq xmm7, 8
+            psubusw xmm11, xmm7 ; xmm11_low = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
             movdqu xmm10, [alphas_saturados]
             paddusw xmm11, xmm10
@@ -156,11 +158,14 @@ Sharpen_asm:
             pslldq xmm8, 8
 
             paddusw xmm7, xmm8 ; ==> hmm7_high = suma(pixeles_que_no_son_el_central)
-            psrldq xmm7, 8
+
 
             movdqu xmm10, [centro_der_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
             pmullw xmm1, xmm10 ; ==> xmm1_high = pixel_central_derecho * 9
 
+
+            ; TODO: entender por que este shift es necesario (por algun motivo xmm1 queda con el valor en el low)
+            psrldq xmm7, 8
             psubusw xmm1, xmm7 ; xmm1_high = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
             movdqu xmm10, [alphas_saturados]
