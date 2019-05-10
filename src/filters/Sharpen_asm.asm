@@ -55,11 +55,11 @@ Sharpen_asm:
     sub r11, 4
     mov r12, 0 ; r12 es i
     .loop_i:
-        cmp r12, r10 ; i == 637 ; ojo este numero esta jarcodeado
+        cmp r12, r10 ; i == 637 ; ojo este comentario esta jarcodeado
         je .fin_i
         mov rbx, 0 ; rbx es j
         .loop_j:
-            cmp rbx,r11 ; j == 1020 ; ojo este numero esta jarcodeado
+            cmp rbx,r11 ; j == 1020 ; ojo este comentario esta jarcodeado
             je .fin_j
 
             ; leer primera fila: xmm0 = src[i][j:j+4]
@@ -101,7 +101,7 @@ Sharpen_asm:
             movdqu xmm7, xmm3
             paddusw xmm7, xmm6
 
-            ; sumar high y low de xmm7, el resultado queda en el low de xmm7
+            ; sumar high y low de xmm7, el resultado queda en el low de xmm7 (en gdb el low se printea a la izq del reg)
             movdqu xmm8, xmm7
             psrldq xmm8, 8
             paddusw xmm7, xmm8
@@ -115,19 +115,14 @@ Sharpen_asm:
             ; xmm8_high += src[i+1][j]
             paddusw xmm8, xmm5
 
-            ; pisamos la parte baja de xmm8 con su parte alta
-            psrldq xmm8, 8
-
-            paddusw xmm7, xmm8 ; ==> hmm7_low = suma(pixeles_que_no_son_el_central)
-
+            paddusw xmm7, xmm8 ; ==> xmm7_low = suma(pixeles_que_no_son_el_central)
 
             movdqu xmm10, [centro_izq_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
-            movdqu xmm11, xmm5
+            movdqu xmm11, xmm1
             pmullw xmm11, xmm10 ; ==> xmm11_low = pixel_central_izquierdo * 9
 
-            ; TODO: entender por que este shift es necesario (por algun motivo xmm11 queda con el valor en el high)
-            pslldq xmm7, 8
-            psubusw xmm11, xmm7 ; xmm11_low = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
+            pslldq xmm7, 8 ; ==> xmm7_high = suma(pixeles_que_no_son_el_central)
+            psubusw xmm11, xmm7 ; xmm11_high = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
             movdqu xmm10, [alphas_saturados]
             paddusw xmm11, xmm10
@@ -154,30 +149,26 @@ Sharpen_asm:
             ; xmm8_low += src[i+1][j]
             paddusw xmm8, xmm1
 
-            ; pisamos la parte alta de xmm8 con su parte baja
-            pslldq xmm8, 8
-
-            paddusw xmm7, xmm8 ; ==> hmm7_high = suma(pixeles_que_no_son_el_central)
+            paddusw xmm7, xmm8 ; ==> xmm7_high = suma(pixeles_que_no_son_el_central)
 
 
             movdqu xmm10, [centro_der_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
-            pmullw xmm1, xmm10 ; ==> xmm1_high = pixel_central_derecho * 9
+            pmullw xmm5, xmm10 ; ==> xmm1_low = pixel_central_derecho * 9
 
 
-            ; TODO: entender por que este shift es necesario (por algun motivo xmm1 queda con el valor en el low)
-            psrldq xmm7, 8
-            psubusw xmm1, xmm7 ; xmm1_high = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
+            psrldq xmm7, 8 ; ==> xmm7_low = suma(pixeles_que_no_son_el_central)
+            psubusw xmm5, xmm7 ; xmm5_low = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
             movdqu xmm10, [alphas_saturados]
-            paddusw xmm1, xmm10
+            paddusw xmm5, xmm10
 
             ; ----- escribir ambos pixeles en memoria -----
 
             ; empaquetar el resultado a bytes
 
-            packuswb xmm11, xmm1 ; xmm5 = | basura | pixel_izq | pixel_der | basura |
+            packuswb xmm11, xmm5 ; xmm5 = | basura | pixel_izq | pixel_der | basura |
 
-            psrldq xmm11, 4 ; TODO: verificar que el right pisa lo que yo veo a la izq
+            psrldq xmm11, 4
 
             dec r9 ; apuntar a i a fila del medio
             inc rbx ; apuntar a j a segunda columna
