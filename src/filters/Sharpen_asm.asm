@@ -147,29 +147,29 @@ Sharpen_asm:
 
             ; sumamos los pixeles que no son el pixel central
 
-            ; sumar los high de 1ra y 3ra filas ;
-            movdqu xmm7, xmm3
-            paddusw xmm7, xmm6
+            ; sumar los primeros dos pixeles de 1ra y 3ra filas ;
+            movdqu xmm7, xmm0
+            paddusw xmm7, xmm2
 
             ; sumar high y low de xmm7, el resultado queda en el low de xmm7 (en gdb el low se printea a la izq del reg)
             movdqu xmm8, xmm7
             psrldq xmm8, 8
             paddusw xmm7, xmm8
 
-            ; xmm8_high = sum(src[i:i+3][j+2])
+            ; xmm8_low = sum(src[i:i+3][j+2])
             pxor xmm8, xmm8
-            paddusw xmm8, xmm0
-            paddusw xmm8, xmm1
-            paddusw xmm8, xmm2
+            paddusw xmm8, xmm3
+            paddusw xmm8, xmm5
+            paddusw xmm8, xmm6
 
             ; xmm8_high += src[i+1][j]
-            paddusw xmm8, xmm5
+            paddusw xmm8, xmm1
 
             paddusw xmm7, xmm8 ; ==> xmm7_low = suma(pixeles_que_no_son_el_central)
 
             movdqu xmm10, [centro_izq_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
             movdqu xmm11, xmm1
-            pmullw xmm11, xmm10 ; ==> xmm11_low = pixel_central_izquierdo * 9
+            pmullw xmm11, xmm10 ; ==> xmm11_high = pixel_central_izquierdo * 9
 
             pslldq xmm7, 8 ; ==> xmm7_high = suma(pixeles_que_no_son_el_central)
             psubusw xmm11, xmm7 ; xmm11_high = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
@@ -181,23 +181,23 @@ Sharpen_asm:
 
             ; sumamos los pixeles que no son el pixel central
 
-            ; sumar los low de 1ra y 3ra filas ;
-            movdqu xmm7, xmm0
-            paddusw xmm7, xmm2
+            ; sumar los ultimos dos pixeles de 1ra y 3ra filas ;
+            movdqu xmm7, xmm3
+            paddusw xmm7, xmm6
 
             ; sumar high y low de xmm7, el resultado queda en el high de xmm7
             movdqu xmm8, xmm7
             pslldq xmm8, 8
             paddusw xmm7, xmm8
 
-            ; xmm8_low = sum(src[i:i+3][j+1])
+            ; xmm8_high = sum(src[i:i+3][j+1])
             pxor xmm8, xmm8
-            paddusw xmm8, xmm3
-            paddusw xmm8, xmm5
-            paddusw xmm8, xmm6
-
-            ; xmm8_low += src[i+1][j]
+            paddusw xmm8, xmm0
             paddusw xmm8, xmm1
+            paddusw xmm8, xmm2
+
+            ; xmm8_high += src[i+1][j]
+            paddusw xmm8, xmm5
 
             paddusw xmm7, xmm8 ; ==> xmm7_high = suma(pixeles_que_no_son_el_central)
 
