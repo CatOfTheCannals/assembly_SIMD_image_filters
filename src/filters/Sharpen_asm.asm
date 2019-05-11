@@ -1,8 +1,12 @@
 section .rodata
+
+black_pixel: dw  0x00,0x00,0x00,0xff
+
 centro_izq_por_9: dw 0x0000,0x0000,0x0000,0x0000,0x0009,0x0009,0x0009,0x0000
 centro_der_por_9: dw 0x0009,0x0009,0x0009,0x0000,0x0000,0x0000,0x0000,0x0000
 
 alphas_saturados: dw  0x0000,0x0000,0x0000,0x00ff,0x0000,0x0000,0x0000,0x00ff
+
 
 section .text
 
@@ -48,11 +52,54 @@ Sharpen_asm:
     ;ecx height
     ;r8d es src row size
     ;r9d es dst row size
-    mov r10, rcx ; r10 es height
-    sub r10, 3
-    mov r11, rdx ; r11 es width
+
+    mov r10, rcx ; r10 = height
+    mov r11, rdx ; r11 = width
     mov r13, rdx ; uso r13 para la macro, pues usa rdx
-    sub r11, 4
+    mov r14d, dword [black_pixel]
+
+    mov rbx, 0 ; rbx es j
+    .horizontal_blacks:
+        cmp rbx, r11
+        je .end_horizontal_blacks
+
+        mov r9, 0 ; escribir el pixel de la primera fila
+        map r9,rbx,r13,r15
+        mov dword [rsi+r15], r14d
+
+        mov r9, r10
+        dec r9 ; escribir el pixel de la ultima fila
+        map r9,rbx,r13,r15
+        mov dword [rsi+r15], r14d
+
+        inc rbx
+        jmp .horizontal_blacks
+    .end_horizontal_blacks:
+
+    mov r12, 1 ; r12 es i
+    dec r10 ; no queremos escribir ni la primera ni la ultima fila
+    .vertical_blacks:
+        cmp r12, r10
+        je .end_vertical_blacks
+
+        mov r9,r12
+        mov rbx, 0 ; escribir el primer pixel de la fila
+        map r9,rbx,r13,r15
+        mov dword [rsi+r15], r14d
+
+        mov rbx, r11
+        dec rbx ; escribir el ultimo pixel de la fila
+        map r9,rbx,r13,r15
+        mov dword [rsi+r15], r14d
+
+        inc r12
+        jmp .vertical_blacks
+    .end_vertical_blacks:
+    inc r10 ; restaurar r10
+
+
+    sub r10, 3 ; queremos bajar hasta dos pixeles antes del fin
+    sub r11, 4 ; queremos ir a la derecha hasta cuatro pixeles antes del fin
     mov r12, 0 ; r12 es i
     .loop_i:
         cmp r12, r10 ; i == 637 ; ojo este comentario esta jarcodeado
@@ -66,16 +113,19 @@ Sharpen_asm:
             mov r9,r12
             map r9,rbx,r13,r15
             movdqu xmm0,[rdi+r15]
+            movdqu xmm15, xmm0
 
             ; leer segunda fila: xmm1 = src[i+1][j:j+4]
             inc r9
             map r9,rbx,r13,r15
             movdqu xmm1,[rdi+r15]
+            movdqu xmm14, xmm1
 
             ; leer tercera fila: xmm2 = src[i+2][j:j+4]
             inc r9
             map r9,rbx,r13,r15
             movdqu xmm2,[rdi+r15]
+            movdqu xmm13, xmm2
 
             ; unpack primera fila high y low
             pxor xmm4, xmm4
