@@ -1,6 +1,6 @@
 section .rodata
 
-black_pixel: dw  0x00,0x00,0x00,0xff
+black_pixel: db  0x00,0x00,0x00,0xff
 
 centro_izq_por_9: dw 0x0000,0x0000,0x0000,0x0000,0x0009,0x0009,0x0009,0x0000
 centro_der_por_9: dw 0x0009,0x0009,0x0009,0x0000,0x0000,0x0000,0x0000,0x0000
@@ -58,6 +58,7 @@ Sharpen_asm:
     mov r13, rdx ; uso r13 para la macro, pues usa rdx
     mov r14d, dword [black_pixel]
 
+
     mov rbx, 0 ; rbx es j
     .horizontal_blacks:
         cmp rbx, r11
@@ -98,8 +99,8 @@ Sharpen_asm:
     inc r10 ; restaurar r10
 
 
-    sub r10, 3 ; queremos bajar hasta dos pixeles antes del fin
-    sub r11, 4 ; queremos ir a la derecha hasta cuatro pixeles antes del fin
+    sub r10, 2 ; queremos bajar hasta dos pixeles antes del fin
+    sub r11, 2 ; queremos ir a la derecha hasta cuatro pixeles antes del fin
     mov r12, 0 ; r12 es i
     .loop_i:
         cmp r12, r10 ; i == 637 ; ojo este comentario esta jarcodeado
@@ -234,6 +235,7 @@ Sharpen_asm:
         inc r12
         jmp .loop_i
     .fin_i:
+
 
 
     pop r15
