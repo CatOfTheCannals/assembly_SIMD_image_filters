@@ -88,9 +88,9 @@ Offset_asm:
 		add rdi, 32
 		add rsi, 32
 		.loopj:
-			movdqu xmm1, [rdi + r12]; xmm0 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
-			movdqu xmm2, [rdi + 32]; xmm1 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
-			movdqu xmm3, [rdi + r13]; xmm2 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
+			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
+			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
+			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
 			movdqu xmm0, xmm6
 			pblendvb xmm1, xmm2
 			movdqu xmm0, xmm7
