@@ -1,100 +1,115 @@
 section .rodata
-mask: db 0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF
-maskRed: db 0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00
-maskGreen: db 0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00
-maskBlue: db 0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00
 
+extern printf
 
-section .text
-%macro map 4 
-	;(i,j) -> i*w*4+j*4
-	; rx i 		    : %1
-	; rx j 		    : %2
-	; rx w          : %3
-	; rx result		: %4
-	
-	; modifies			: %4
-	push rax
-	mov rax,%1
-	mul %3
-	add rax,%2
-	shl rax,2
-	mov %4,rax
-	pop rax
-
-%endmacro
+ALIGN 16
+mask1: TIMES 4 db 0x00, 0xff, 0x00, 0x00
+mask2: TIMES 4 db 0x00, 0x00, 0xff, 0x00
+zeromask: TIMES 4 db 0x00, 0x00, 0x00, 0xff
+zeromask2: db 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff
+debug: db 'i = %d, j = %d', 10, 0
 
 global Offset_asm
+
+section .text
+
 Offset_asm:
+;RDI = src
+;RSI = dst
+;EDX = width
+;ECX = height 
+;R8d = src_row_size
+;R9d = dst_row_size
 	push rbp
-    mov rbp,rsp
-    push rbx
-    push r12
-    push r13
-    push r14
-    push r15
+	mov rbp, rsp
+	push r12
+	push r13
+	push r14
+	push r15
+	movdqa xmm6, [mask1]
+	movdqa xmm7, [mask2]
+	movdqa xmm8, [zeromask]
 
-	;rsi dst matriz
-	;rdi src matriz
-	;edx width en pixeles
-	;ecx height
-	;r8d es src row size
-	;r9d es dst row size
-	mov r10,rcx							 ;r10 es height
-	sub r10,8
-	mov r11,rdx							 ;r11 es width
-	mov r13,rdx
-	sub r11,8
-	sub r11,4
-	mov r12,0                            ;r12 es i
-	movdqu xmm3,[maskBlue]
-	movdqu xmm5,[maskGreen]
-	movdqu xmm6,[maskRed]
-	movdqu xmm7,[mask]
-.loop_i:
-	cmp r12,r10                          ;i < height-8
-	je .fin_i
-	mov rbx,0                            ;rbx es j	
-	.loop_j:
-		cmp rbx,r11                      ;j < width-8-4 -> porque calculo en paralelo
-		je .fin_j
-		mov r9,r12                       ;en r9 -> i+8
-		add r9,8
-		mov r8,rbx                       ;en r8 -> j
-		map r9,r8,r13,r15
-		movdqu xmm0,[rdi+r15]		     ;xmm0 leo de src el [i+8] [j]
-		sub r9,8                         ;en r9 -> i
-		add r8,8                         ;en r8 -> j+8
-		map r9,r8,r13,r15
-		movdqu xmm1,[rdi+r15]            ;xmm1 leo de src el [i] [j+8]
-		add r9,8
-		map r9,r8,r13,r15
-		movdqu xmm2,[rdi+r15]            ;xmm2 leo de src el [i+8][j+8]
-
-		pand xmm0,xmm3                    ;and entre [i+8][j] vs maskblue me da xmm3 blue 0|blue 0|blue 0|blue 0
-		pand xmm1,xmm5                    ;and entre [i][j+8] vs maskgreen me da xmm5 0green0|0green0|0green0|0green0
-		pand xmm2,xmm6                    ;and entre [i+8][j+8] vs maskgreen me da xmm5 00red0|00red0|00red0|00red0
-
-		por xmm0,xmm1                     ;or junta los valores que interesan
-		por xmm0,xmm2
-		por xmm0,xmm7                     ;pone el 255 en a
-
-		map r12,rbx,r13,r15
-		movdqu [rsi+r15],xmm0
-
-		add rbx,4
-		jmp .loop_j
-	.fin_j:
-	inc r12
-	jmp .loop_i
-.fin_i:
-
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rbx
-    pop rbp
-	ret
-
+	;Armamos los bordes negros
+	mov r13d, edx
+	mov eax, ecx
+	mov r12d, r8d
+	sub eax, 8
+	mul r12d
+	mov edx, r13d
+	mov r12, rax 
+	mov r13, rsi
+	xor r10, r10
+	xor r11, r11
+	;Bordes superior e inferior
+	.loopi_bordeSupInf:
+		.loopj_bordeSupInf:
+			movdqu [r13], xmm8
+			movdqu [r13 + r12], xmm8
+			add r13, 16
+			add r11, 4
+			cmp r11d, edx
+			jne .loopj_bordeSupInf
+		xor r11, r11 
+		inc r10
+		cmp r10, 8
+		jne .loopi_bordeSupInf
+	mov r10, 8
+	mov r11, rcx
+	lea r12, [r11 + rdx - 8]
+	mov r13, rsi
+	;Bordes izquierdo y derecho
+	.loop_bordeIzqDer:
+		movdqu [r13], xmm8
+		add r13, 16
+		movdqu [r13], xmm8
+		add r13, 16
+		lea r13, [r13 + r8]
+		sub r13, 64
+		movdqu [r13], xmm8
+		add r13, 16
+		movdqu [r13], xmm8
+		add r13, 16
+		inc r10
+		cmp r10, r11
+		jne .loop_bordeIzqDer
+	;Filtro Offset
+	lea r12, [r8 * 8];
+	lea r13, [r8 * 8 + 32]
+	mov r14d, edx
+	sub r14, 9; R14 = width - 9
+	mov r15d, ecx
+	sub r15, 9; R15 = height - 9
+	mov r10, 8; R10 = i
+	mov r11, 8; R11 = j
+	lea rdi, [rdi + r8 * 8]
+	lea rsi, [rsi + r8 * 8]
+	.loopi:
+		add rdi, 32
+		add rsi, 32
+		.loopj:
+			movdqu xmm1, [rdi + r12]; xmm0 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
+			movdqu xmm2, [rdi + 32]; xmm1 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
+			movdqu xmm3, [rdi + r13]; xmm2 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
+			movdqu xmm0, xmm6
+			pblendvb xmm1, xmm2
+			movdqu xmm0, xmm7
+			pblendvb xmm1, xmm3
+			movdqu [rsi], xmm1
+			add rdi, 16
+			add rsi, 16
+			add r11, 4
+			cmp r11, r14
+			jle .loopj
+		add rdi, 32
+		add rsi, 32	
+		mov r11, 8
+		inc r10
+		cmp r10, r15
+		jle .loopi 	
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbp
 
