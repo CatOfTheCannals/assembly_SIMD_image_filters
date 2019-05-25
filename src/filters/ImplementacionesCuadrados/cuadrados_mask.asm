@@ -1,5 +1,4 @@
 section .rodata
-
 mask: db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF
 maskzeros: db 0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF
 masktest: dq 0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF
@@ -94,15 +93,14 @@ Cuadrados_asm:
 	;ecx height
 	;r8d es src row size
 	;r9d es dst row size
-	mov r10,rcx			     ;r10 es height
+	mov r10,rcx							 ;r10 es height
 	sub r10,4
-	mov r11,rdx		             ;r11 es width
+	mov r11,rdx							 ;r11 es width
 	mov r13,rdx                          ;uso r13 para la macro, pues usa rdx
 	sub r11,4
-	mov r12,4                            ;r12 es i 
-    movdqu xmm3,[mask]        
-    movdqu xmm4,[maskzeros]         
-    .loop_i:                                 ;iteramos sobre cada pixel de la imagen 
+	mov r12,4                            ;r12 es i         
+         
+    .loop_i:
         cmp r12,r10
         je .fin_i
         mov rbx,4                            ;rbx es j  
@@ -110,31 +108,31 @@ Cuadrados_asm:
             cmp rbx,r11
             je .fin_j
             mov r9,r12                       ;experimentacion: hacer un loop vs loop unrolling (prediccion)
-            map r9,rbx,r13,r15               ;utilizamos una macro para poder obtener en r15 el offset para acceder al i,j deseado    
-            movdqu xmm0,[rdi+r15]            ;obtenemos 4 pixeles del i,j
-            inc r9                           ;en las siguientes iteraciones buscamos cada fila del cuadrado 4x4
+            map r9,rbx,r13,r15                     
+            movdqu xmm0,[rdi+r15]            ;leo de src el i j
+            inc r9
             map r9,rbx,r13,r15
             movdqu xmm1,[rdi+r15] 
-            pmaxub xmm0,xmm1                 ;al obtener una fila calculamos el maximo byte a byte contra la primer fila
+            pmaxub xmm0,xmm1
             inc r9
             map r9,rbx,r13,r15
             movdqu xmm1,[rdi+r15]
-            pmaxub xmm0,xmm1                 ;volvemos a calcular el maximo con la tercer fila
+            pmaxub xmm0,xmm1
             inc r9
             map r9,rbx,r13,r15
             movdqu xmm1,[rdi+r15]
-            pmaxub xmm0,xmm1                 ;por ultimo calculamos el maximo con la cuarta fila
-                                             ;en xmm0 quedan los maximos byte a byte de las cuatro filas 
-            movdqu xmm1,xmm0                 ;xmm0: max1 | max2 | max3 | max4                lo muevo a una variable auxiliar
-            pslldq xmm1,8                    ;xmm1: max3 | max4 |   0  |   0                 shift para subir la parte baja
-            pmaxub xmm0,xmm1                 ;xmm0: max(max1,max3) | max(max2,max4) |  ~  |  ~   resultado de aplicar nuevamente maximo byte a byte
+            pmaxub xmm0,xmm1
+
+            movdqu xmm1,xmm0                 ;xmm0: max1 | max2 | max3 | max4
+            pslldq xmm1,8                    ;xmm1: max3 | max4 |   0  |   0
+            pmaxub xmm0,xmm1                 ;xmm0: max(max1,max3) | max(max2,max4) |  ~  |  ~  
             movdqu xmm1,xmm0
-            pslldq xmm1,4                    ;xmm1: max(max2,max4) | ~ | ~ | ~               shifteamos una vez mas para volve a aplicar la instruccion
-            pmaxub xmm0,xmm1                 ;xmm0: max(max(max2,max4) , max(max1,max3)) | ~ | ~ | ~  finalmente lo que se obtiene es el maximo entre cada pixel dentro del cuadrado 
-            por xmm0,xmm3
-            psrldq xmm0,12                   ;queremos que el calculo este en la parte baja del registro para poder escribirlo con un movd
-            map r12,rbx,r13,r15              ;calculamos donde deberiamos escribir el resultado
-            movd [rsi+r15],xmm0              ;escribimos en destino, la parte baja               
+            pslldq xmm1,4                    ;xmm1: max(max2,max4) | ~ | ~ | ~ 
+            pmaxub xmm0,xmm1                 ;xmm0: max(max(max2,max4) , max(max1,max3)) | ~ | ~ | ~
+            por xmm0,[mask]
+            psrldq xmm0,12
+            map r12,rbx,r13,r15
+            movd [rsi+r15],xmm0                              
 
             inc rbx
             jmp .loop_j
@@ -142,7 +140,7 @@ Cuadrados_asm:
         inc r12
         jmp .loop_i
     .fin_i:
-;EL SIGUIENTE CODIGO ES PARA REALIZAR EL MARCO NEGRO. 
+
     mov r12,0                                ;r12 es k
     .loop_k:
     	cmp r12,4
@@ -153,7 +151,7 @@ Cuadrados_asm:
     			je .fin_l
 
     			map r12,rbx,r13,r15
-    			movdqu xmm0,xmm4
+    			movdqu xmm0,[maskzeros]
     			movdqu [rsi+r15],xmm0
 
     			add rbx,4
@@ -168,7 +166,7 @@ Cuadrados_asm:
     	cmp r12,r10                          ;r10 es height -4
     	je .fin_m
  		map r12,r11,r13,r15                  ;m['i'][with-4]
-		movdqu xmm0,xmm4
+		movdqu xmm0,[maskzeros]
 		movdqu [rsi+r15],xmm0
     	inc r12
     	jmp .loop_m
@@ -184,7 +182,7 @@ Cuadrados_asm:
     			je .fin_o
 
     			map r12,rbx,r13,r15
-    			movdqu xmm0,xmm4
+    			movdqu xmm0,[maskzeros]
     			movdqu [rsi+r15],xmm0
 
     			add rbx,4

@@ -2,11 +2,9 @@ section .rodata
 
 extern printf
 
-ALIGN 16
 mask1: TIMES 4 db 0x00, 0xff, 0x00, 0x00
 mask2: TIMES 4 db 0x00, 0x00, 0xff, 0x00
 zeromask: TIMES 4 db 0x00, 0x00, 0x00, 0xff
-zeromask2: db 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff
 debug: db 'i = %d, j = %d', 10, 0
 
 global Offset_asm
@@ -26,9 +24,6 @@ Offset_asm:
 	push r13
 	push r14
 	push r15
-	movdqa xmm6, [mask1]
-	movdqa xmm7, [mask2]
-	movdqa xmm8, [zeromask]
 
 	;Armamos los bordes negros
 	mov r13d, edx
@@ -44,6 +39,7 @@ Offset_asm:
 	;Bordes superior e inferior
 	.loopi_bordeSupInf:
 		.loopj_bordeSupInf:
+			movdqu xmm8, [zeromask]
 			movdqu [r13], xmm8
 			movdqu [r13 + r12], xmm8
 			add r13, 16
@@ -60,6 +56,7 @@ Offset_asm:
 	mov r13, rsi
 	;Bordes izquierdo y derecho
 	.loop_bordeIzqDer:
+		movdqu xmm8, [zeromask]
 		movdqu [r13], xmm8
 		add r13, 16
 		movdqu [r13], xmm8
@@ -91,9 +88,9 @@ Offset_asm:
 			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
 			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
 			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
-			movdqu xmm0, xmm6
+			movdqu xmm0, [mask1]
 			pblendvb xmm1, xmm2
-			movdqu xmm0, xmm7
+			movdqu xmm0, [mask2]
 			pblendvb xmm1, xmm3
 			movdqu [rsi], xmm1
 			add rdi, 16
