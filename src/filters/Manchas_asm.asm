@@ -5,6 +5,7 @@ extern printf
 
 section .rodata
 
+ALIGN 16
 dos: dd 2.0, 2.0, 2.0, 2.0
 pi: dd 3.14159, 3.14159, 3.14159, 3.14159 
 cincuenta: dd 50.0, 50.0, 50.0, 50.0
@@ -25,10 +26,10 @@ Manchas_asm:
 	push r13
 	push r14
 	push r15
-	movdqu xmm7, [cincuenta]
-	movdqu xmm4, [veinticinco]
-	movdqu xmm5, [dos]
-	movdqu xmm10, [pi]
+	movdqa xmm7, [cincuenta]
+	movdqa xmm4, [veinticinco]
+	movdqa xmm5, [dos]
+	movdqa xmm10, [pi]
 	pxor xmm12, xmm12; Para que guarde 0 y unpackear más adelante
 	mulps xmm10, xmm5
 	mov r14d, edx; R14d para WIDTH

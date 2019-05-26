@@ -101,8 +101,7 @@ Cuadrados_asm:
 	mov r13,rdx                          ;uso r13 para la macro, pues usa rdx
 	sub r11,4
 	mov r12,4                            ;r12 es i 
-    movdqa xmm3,[mask]        
-    movdqa xmm4,[maskzeros]         
+         
     .loop_i:
         cmp r12,r10
         je .fin_i
@@ -132,7 +131,7 @@ Cuadrados_asm:
             movdqu xmm1,xmm0
             pslldq xmm1,4                    ;xmm1: max(max2,max4) | ~ | ~ | ~ 
             pmaxub xmm0,xmm1                 ;xmm0: max(max(max2,max4) , max(max1,max3)) | ~ | ~ | ~
-            por xmm0,xmm3
+            por xmm0,[mask]
             psrldq xmm0,12
             map r12,rbx,r13,r15
             movd [rsi+r15],xmm0                              
@@ -154,7 +153,7 @@ Cuadrados_asm:
     			je .fin_l
 
     			map r12,rbx,r13,r15
-    			movdqu xmm0,xmm4
+    			movdqu xmm0,[maskzeros]
     			movdqu [rsi+r15],xmm0
 
     			add rbx,4
@@ -169,7 +168,7 @@ Cuadrados_asm:
     	cmp r12,r10                          ;r10 es height -4
     	je .fin_m
  		map r12,r11,r13,r15                  ;m['i'][with-4]
-		movdqu xmm0,xmm4
+		movdqu xmm0,[maskzeros]
 		movdqu [rsi+r15],xmm0
     	inc r12
     	jmp .loop_m
@@ -185,7 +184,7 @@ Cuadrados_asm:
     			je .fin_o
 
     			map r12,rbx,r13,r15
-    			movdqu xmm0,xmm4
+    			movdqu xmm0,[maskzeros]
     			movdqu [rsi+r15],xmm0
 
     			add rbx,4
@@ -201,7 +200,7 @@ Cuadrados_asm:
     	je .fin_p
     	mov r11,0
  		map r12,r11,r13,r15                  ;m['i'][with-4]
-		movdqu xmm0,xmm4
+		movdqu xmm0,[maskzeros]
 		movdqu [rsi+r15],xmm0
     	inc r12
     	jmp .loop_p
