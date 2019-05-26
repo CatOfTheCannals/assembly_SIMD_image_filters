@@ -6,6 +6,7 @@ masktest: dq 0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF
 maskzero: db 0x0000000000000000,0x0000000000000000
 str: db 'paso',10,0
 
+
 section .text
 extern printf
 %macro map 4 
@@ -109,21 +110,21 @@ Cuadrados_asm:
         .loop_j:
             cmp rbx,r11
             je .fin_j
-            mov r9,r12                       ;experimentacion: hacer un loop vs loop unrolling (prediccion)
+            mov r9,r12                       
             map r9,rbx,r13,r15                     
-            movdqu xmm0,[rdi+r15]            ;leo de src el i j
-            inc r9
-            map r9,rbx,r13,r15
-            movdqu xmm1,[rdi+r15] 
-            pmaxub xmm0,xmm1
-            inc r9
-            map r9,rbx,r13,r15
-            movdqu xmm1,[rdi+r15]
-            pmaxub xmm0,xmm1
-            inc r9
-            map r9,rbx,r13,r15
-            movdqu xmm1,[rdi+r15]
-            pmaxub xmm0,xmm1
+            movdqu xmm0,[rdi+r15]            ;en xmm0 tengo la lectura del (i,j)
+
+                mov r8,0
+                .loop_r:                     ;loop para obtener los pixeles del cuadrado correspondiente al (i,j)
+                    cmp r8,3
+                    je .fin_r
+                    inc r9
+                    map r9,rbx,r13,r15
+                    movdqu xmm1,[rdi+r15]    ;en cada iteracion voy a guardar el maximo entre xmm0 y xmm1 byte a byte en xmm0
+                    pmaxub xmm0,xmm1
+                    inc r8
+                    jmp .loop_r
+                .fin_r:
 
             movdqu xmm1,xmm0                 ;xmm0: max1 | max2 | max3 | max4
             pslldq xmm1,8                    ;xmm1: max3 | max4 |   0  |   0
@@ -214,3 +215,4 @@ Cuadrados_asm:
     pop rbx
     pop rbp
 	ret
+

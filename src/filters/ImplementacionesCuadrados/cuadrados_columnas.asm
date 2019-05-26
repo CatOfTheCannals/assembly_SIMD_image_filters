@@ -6,6 +6,7 @@ masktest: dq 0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF
 maskzero: db 0x0000000000000000,0x0000000000000000
 str: db 'paso',10,0
 
+
 section .text
 extern printf
 %macro map 4 

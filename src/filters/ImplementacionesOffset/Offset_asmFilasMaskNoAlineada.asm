@@ -90,9 +90,9 @@ Offset_asm:
 			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
 			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
 			movdqu xmm0, xmm6
-			pblendvb xmm1, xmm2
+			pblendvb xmm1, xmm2, xmm0
 			movdqu xmm0, xmm7
-			pblendvb xmm1, xmm3
+			pblendvb xmm1, xmm3, xmm0
 			movdqu [rsi], xmm1
 			add rdi, 16
 			add rsi, 16
