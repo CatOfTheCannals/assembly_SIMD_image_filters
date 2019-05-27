@@ -26,12 +26,9 @@ Manchas_asm:
 	push r13
 	push r14
 	push r15
-	movdqa xmm7, [cincuenta]
-	movdqa xmm4, [veinticinco]
-	movdqa xmm5, [dos]
 	movdqa xmm10, [pi]
 	pxor xmm12, xmm12; Para que guarde 0 y unpackear más adelante
-	mulps xmm10, xmm5
+	mulps xmm10, [dos]
 	mov r14d, edx; R14d para WIDTH
 	mov r15d, ecx; R15d para HEIGHT
 	xor rbx, rbx
@@ -105,8 +102,8 @@ Manchas_asm:
 			;xmm2 = ||sin((float)(i mod n) / n * 2 * pi) | sin((float)(i mod n) / n * 2 * pi) 
 			;| sin((float)(i mod n) / n * 2 * pi) | sin((float)(i mod n) / n * 2 * pi) ||
 			mulps xmm0, xmm2
-			mulps xmm0, xmm7
-			subps xmm0, xmm4
+			mulps xmm0, [cincuenta]
+			subps xmm0, [veinticinco]
 			cvtps2dq xmm0, xmm0
 			;xmm0 == ||x_0 | x_1 | x_2 | x_3||
 			movdqu xmm1, [rdi];xmm1 == ||a3|r3|g3|b3||a2|r2|g2|b2||a1|r1|g1|b1||a0|r0|g0|b0||
@@ -212,8 +209,8 @@ Manchas_asm:
 			;xmm2 = ||sin((float)(i mod n) / n * 2 * pi) | sin((float)(i mod n) / n * 2 * pi) 
 			;| sin((float)(i mod n) / n * 2 * pi) | sin((float)(i mod n) / n * 2 * pi) ||
 			mulps xmm0, xmm2
-			mulps xmm0, xmm7
-			subps xmm0, xmm4
+			mulps xmm0, [cincuenta]
+			subps xmm0, [veinticinco]
 			cvtps2dq xmm0, xmm0
 			;xmm0 == ||x_0 | x_1 | x_2 | x_3||
 			movdqu xmm1, [rdi];xmm1 == ||a3|r3|g3|b3||a2|r2|g2|b2||a1|r1|g1|b1||a0|r0|g0|b0||
@@ -320,8 +317,8 @@ Manchas_asm:
 			;xmm2 = ||sin((float)(i mod n) / n * 2 * pi) | sin((float)(i mod n) / n * 2 * pi) 
 			;| sin((float)(i mod n) / n * 2 * pi) | sin((float)(i mod n) / n * 2 * pi) ||
 			mulps xmm0, xmm2
-			mulps xmm0, xmm7
-			subps xmm0, xmm4
+			mulps xmm0, [cincuenta]
+			subps xmm0, [veinticinco]
 			cvtps2dq xmm0, xmm0
 			;xmm0 == ||x_0 | x_1 | x_2 | x_3||
 			movdqu xmm1, [rdi];xmm1 == ||a3|r3|g3|b3||a2|r2|g2|b2||a1|r1|g1|b1||a0|r0|g0|b0||
@@ -428,8 +425,8 @@ Manchas_asm:
 			;xmm2 = ||sin((float)(i mod n) / n * 2 * pi) | sin((float)(i mod n) / n * 2 * pi) 
 			;| sin((float)(i mod n) / n * 2 * pi) | sin((float)(i mod n) / n * 2 * pi) ||
 			mulps xmm0, xmm2
-			mulps xmm0, xmm7
-			subps xmm0, xmm4
+			mulps xmm0, [cincuenta]
+			subps xmm0, [veinticinco]
 			cvtps2dq xmm0, xmm0
 			;xmm0 == ||x_0 | x_1 | x_2 | x_3||
 			movdqu xmm1, [rdi];xmm1 == ||a3|r3|g3|b3||a2|r2|g2|b2||a1|r1|g1|b1||a0|r0|g0|b0||

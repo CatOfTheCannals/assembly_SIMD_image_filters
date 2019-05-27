@@ -5,6 +5,7 @@ extern printf
 
 section .rodata
 
+ALIGN 16
 dos: dd 2.0, 2.0, 2.0, 2.0
 pi: dd 3.14159, 3.14159, 3.14159, 3.14159 
 cincuenta: dd 50.0, 50.0, 50.0, 50.0
@@ -25,10 +26,10 @@ Manchas_asm:
 	push r13
 	push r14
 	push r15
-	movdqu xmm7, [cincuenta]
-	movdqu xmm4, [veinticinco]
-	movdqu xmm5, [dos]
-	movdqu xmm10, [pi]
+	movdqa xmm7, [cincuenta]
+	movdqa xmm4, [veinticinco]
+	movdqa xmm5, [dos]
+	movdqa xmm10, [pi]
 	pxor xmm12, xmm12; Para que guarde 0 y unpackear más adelante
 	mulps xmm10, xmm5
 	mov r14d, edx; R14d para WIDTH
@@ -40,9 +41,11 @@ Manchas_asm:
 	divps xmm10, xmm13; xmm10 == ||2 * PI / n| 2 * PI / n | 2 * PI / n | 2 * PI / n||
 	xor r12, r12; Iterador filas - i
 	xor r13, r13; Iterador columnas - j
+	xor r10, r10; Bytes por fila en src
+	xor r11, r11; Bytes por fila en dst
 	finit
-	.rowLoop:
-		.colLoop:
+	.colLoop:
+		.rowLoop:
 			mov ecx, 3
 			.loopJmodN:
 				mov eax, r13d
@@ -108,7 +111,10 @@ Manchas_asm:
 			subps xmm0, xmm4
 			cvtps2dq xmm0, xmm0
 			;xmm0 == ||x_0 | x_1 | x_2 | x_3||
-			movdqu xmm1, [rdi];xmm1 == ||a3|r3|g3|b3||a2|r2|g2|b2||a1|r1|g1|b1||a0|r0|g0|b0||
+			sub r13, 4
+			lea r11, [r10 + r13 * 4]
+
+			movdqu xmm1, [rdi + r11];xmm1 == ||a3|r3|g3|b3||a2|r2|g2|b2||a1|r1|g1|b1||a0|r0|g0|b0||
 			movdqu xmm3, xmm1
 			punpcklbw xmm3, xmm12
 			;xmm3 == ||a1 | r1 | g1 | b1 || a0 | r0 | g0 | b0 || //Tamaño word
@@ -145,15 +151,18 @@ Manchas_asm:
 			pcmpgtw xmm11, xmm9
 			pand xmm6, xmm11
 			packuswb xmm3, xmm6
-			movdqu [rsi], xmm3
-			add rdi, 16
-			add rsi, 16
-			cmp r13d, r14d
-			jne .colLoop
-		xor r13, r13
-		inc r12
-		cmp r12d, r15d
-		jne .rowLoop 
+			movdqu [rsi + r11], xmm3
+			;add rdi, 16
+			;add rsi, 16
+			add r10d, r9d 
+			inc r12
+			cmp r12d, r15d
+			jne .rowLoop
+		xor r10, r10
+		xor r12, r12
+		add r13, 4
+		cmp r13d, r14d
+		jne .colLoop 
 	pop r15
 	pop r14
 	pop r13

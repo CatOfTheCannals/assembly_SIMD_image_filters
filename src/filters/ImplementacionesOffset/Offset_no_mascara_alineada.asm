@@ -2,7 +2,6 @@ section .rodata
 
 extern printf
 
-ALIGN 16
 mask1: TIMES 4 db 0x00, 0xff, 0x00, 0x00
 mask2: TIMES 4 db 0x00, 0x00, 0xff, 0x00
 zeromask: TIMES 4 db 0x00, 0x00, 0x00, 0xff
@@ -25,9 +24,9 @@ Offset_asm:
 	push r13
 	push r14
 	push r15
-	movdqa xmm6, [mask1]
-	movdqa xmm7, [mask2]
-	movdqa xmm8, [zeromask]
+	movdqu xmm6, [mask1]
+	movdqu xmm7, [mask2]
+	movdqu xmm8, [zeromask]
 
 	;Armamos los bordes negros
 	mov r13d, edx
@@ -91,9 +90,9 @@ Offset_asm:
 			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
 			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
 			movdqu xmm0, xmm6
-			pblendvb xmm1, xmm2, xmm0
+			pblendvb xmm1, xmm2
 			movdqu xmm0, xmm7
-			pblendvb xmm1, xmm3, xmm0
+			pblendvb xmm1, xmm3
 			movdqu [rsi], xmm1
 			add rdi, 16
 			add rsi, 16
@@ -103,9 +102,9 @@ Offset_asm:
 			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
 			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
 			movdqu xmm0, xmm6
-			pblendvb xmm1, xmm2, xmm0
+			pblendvb xmm1, xmm2
 			movdqu xmm0, xmm7
-			pblendvb xmm1, xmm3, xmm0
+			pblendvb xmm1, xmm3
 			movdqu [rsi], xmm1
 			add rdi, 16
 			add rsi, 16
@@ -115,9 +114,9 @@ Offset_asm:
 			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
 			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
 			movdqu xmm0, xmm6
-			pblendvb xmm1, xmm2, xmm0
+			pblendvb xmm1, xmm2
 			movdqu xmm0, xmm7
-			pblendvb xmm1, xmm3, xmm0
+			pblendvb xmm1, xmm3
 			movdqu [rsi], xmm1
 			add rdi, 16
 			add rsi, 16
@@ -127,9 +126,9 @@ Offset_asm:
 			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
 			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
 			movdqu xmm0, xmm6
-			pblendvb xmm1, xmm2, xmm0
+			pblendvb xmm1, xmm2
 			movdqu xmm0, xmm7
-			pblendvb xmm1, xmm3, xmm0
+			pblendvb xmm1, xmm3
 			movdqu [rsi], xmm1
 			add rdi, 16
 			add rsi, 16
