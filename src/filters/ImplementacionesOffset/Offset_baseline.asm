@@ -12,29 +12,6 @@ global Offset_asm
 
 section .text
 
-%macro print 2
-push rdi
-push rsi
-push rdx
-push rcx
-push r8
-push r9
-push r10
-push r11
-mov rdi, debug
-mov esi, %1
-mov edx, %2
-call printf
-pop r11
-pop r10
-pop r9
-pop r8
-pop rcx
-pop rdx
-pop rsi
-pop rdi
-%endmacro
-
 Offset_asm:
 ;RDI = src
 ;RSI = dst
@@ -104,35 +81,71 @@ Offset_asm:
 	sub r15, 9; R15 = height - 9
 	mov r10, 8; R10 = i
 	mov r11, 8; R11 = j
-	lea rdi, [rdi + r8 * 8 + 32]
-	lea rsi, [rsi + r8 * 8 + 32]
-	mov rcx, rdi; src
-	mov rdx, rsi; dst
-	.loopj:
-		.loopi:
+	lea rdi, [rdi + r8 * 8]
+	lea rsi, [rsi + r8 * 8]
+	.loopi:
+		add rdi, 32
+		add rsi, 32
+		.loopj:
 			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
 			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
 			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
 			movdqu xmm0, xmm6
-			pblendvb xmm1, xmm2, xmm0
+			pblendvb xmm1, xmm2
 			movdqu xmm0, xmm7
-			pblendvb xmm1, xmm3, xmm0
+			pblendvb xmm1, xmm3
 			movdqu [rsi], xmm1
-			add rdi, r8
-			add rsi, r8
-			inc r10
-			cmp r10, r15
-			jle .loopi
-		mov r10, 8
-		add rcx, 16
-		add rdx, 16
-		mov rdi, rcx
-		mov rsi, rdx	
-		add r11, 4
-		cmp r11, r14
-		jle .loopj 	
+			add rdi, 16
+			add rsi, 16
+			add r11, 4
+			;-----------------
+			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
+			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
+			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
+			movdqu xmm0, xmm6
+			pblendvb xmm1, xmm2
+			movdqu xmm0, xmm7
+			pblendvb xmm1, xmm3
+			movdqu [rsi], xmm1
+			add rdi, 16
+			add rsi, 16
+			add r11, 4
+			;----------------
+			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
+			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
+			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
+			movdqu xmm0, xmm6
+			pblendvb xmm1, xmm2
+			movdqu xmm0, xmm7
+			pblendvb xmm1, xmm3
+			movdqu [rsi], xmm1
+			add rdi, 16
+			add rsi, 16
+			add r11, 4
+			;----------------
+			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
+			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
+			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
+			movdqu xmm0, xmm6
+			pblendvb xmm1, xmm2
+			movdqu xmm0, xmm7
+			pblendvb xmm1, xmm3
+			movdqu [rsi], xmm1
+			add rdi, 16
+			add rsi, 16
+			add r11, 4
+			;----------------
+			cmp r11, r14
+			jle .loopj
+		add rdi, 32
+		add rsi, 32	
+		mov r11, 8
+		inc r10
+		cmp r10, r15
+		jle .loopi 	
 	pop r15
 	pop r14
 	pop r13
 	pop r12
 	pop rbp
+

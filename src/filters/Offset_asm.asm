@@ -6,7 +6,6 @@ ALIGN 16
 mask1: TIMES 4 db 0x00, 0xff, 0x00, 0x00
 mask2: TIMES 4 db 0x00, 0x00, 0xff, 0x00
 zeromask: TIMES 4 db 0x00, 0x00, 0x00, 0xff
-zeromask2: db 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff
 debug: db 'i = %d, j = %d', 10, 0
 
 global Offset_asm
@@ -92,14 +91,50 @@ Offset_asm:
 			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
 			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
 			movdqu xmm0, xmm6
-			pblendvb xmm1, xmm2, xmm0
+			pblendvb xmm1, xmm2
 			movdqu xmm0, xmm7
-			pblendvb xmm1, xmm3, xmm0
-
+			pblendvb xmm1, xmm3
 			movdqu [rsi], xmm1
 			add rdi, 16
 			add rsi, 16
 			add r11, 4
+			;-----------------
+			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
+			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
+			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
+			movdqu xmm0, xmm6
+			pblendvb xmm1, xmm2
+			movdqu xmm0, xmm7
+			pblendvb xmm1, xmm3
+			movdqu [rsi], xmm1
+			add rdi, 16
+			add rsi, 16
+			add r11, 4
+			;----------------
+			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
+			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
+			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
+			movdqu xmm0, xmm6
+			pblendvb xmm1, xmm2
+			movdqu xmm0, xmm7
+			pblendvb xmm1, xmm3
+			movdqu [rsi], xmm1
+			add rdi, 16
+			add rsi, 16
+			add r11, 4
+			;----------------
+			movdqu xmm1, [rdi + r12]; xmm1 = src[i+8][j] y los 3 píxeles que siguen. Necesario para BLUE.
+			movdqu xmm2, [rdi + 32]; xmm2 = src[i][j+8] y los 3 píxeles que siguen. Necesario para GREEN.
+			movdqu xmm3, [rdi + r13]; xmm3 = src[i+8][j+8] y los 3 píxeles que siguen. Necesario para RED.
+			movdqu xmm0, xmm6
+			pblendvb xmm1, xmm2
+			movdqu xmm0, xmm7
+			pblendvb xmm1, xmm3
+			movdqu [rsi], xmm1
+			add rdi, 16
+			add rsi, 16
+			add r11, 4
+			;----------------
 			cmp r11, r14
 			jle .loopj
 		add rdi, 32
