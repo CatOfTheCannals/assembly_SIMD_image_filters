@@ -180,7 +180,7 @@ Cuadrados_asm:
     	cmp r12,rcx
     	je .fin_n
     	mov rbx,0                            ;rbx es l 
-    		.loop_o
+    		.loop_o:
     			cmp rbx,r13
     			je .fin_o
 
