@@ -115,6 +115,9 @@ Cuadrados_asm:
             je .fin_i
 
                 mov r8,0
+                mov r9,r12
+                map r9,rbx,r13,r15
+                movdqu xmm0,[rdi+r15]
                 .loop_r:                     ;loop para obtener los pixeles del cuadrado correspondiente al (i,j)
                     cmp r8,3
                     je .fin_r
@@ -215,4 +218,3 @@ Cuadrados_asm:
     pop rbx
     pop rbp
     ret
-
