@@ -1,7 +1,7 @@
 section .rodata
 
 black_pixel: db  0x00,0x00,0x00,0xff
-
+ALIGN 16
 centro_izq_por_9: dw 0x0000,0x0000,0x0000,0x0000,0x0009,0x0009,0x0009,0x0000
 centro_der_por_9: dw 0x0009,0x0009,0x0009,0x0000,0x0000,0x0000,0x0000,0x0000
 
@@ -57,8 +57,9 @@ Sharpen_asm:
     mov r11, rdx ; r11 = width
     mov r13, rdx ; uso r13 para la macro, pues usa rdx
     mov r14d, dword [black_pixel]
-
-
+    movdqa xmm13,[centro_izq_por_9]
+    movdqa xmm14,[centro_der_por_9]
+    movdqa xmm15,[alphas_saturados]
     mov rbx, 0 ; rbx es j
     .horizontal_blacks:
         cmp rbx, r11
@@ -114,19 +115,16 @@ Sharpen_asm:
             mov r9,r12
             map r9,rbx,r13,r15
             movdqu xmm0,[rdi+r15]
-            movdqu xmm15, xmm0
 
             ; leer segunda fila: xmm1 = src[i+1][j:j+4]
             inc r9
             map r9,rbx,r13,r15
             movdqu xmm1,[rdi+r15]
-            movdqu xmm14, xmm1
 
             ; leer tercera fila: xmm2 = src[i+2][j:j+4]
             inc r9
             map r9,rbx,r13,r15
             movdqu xmm2,[rdi+r15]
-            movdqu xmm13, xmm2
 
             ; unpack primera fila high y low
             pxor xmm4, xmm4
@@ -168,14 +166,14 @@ Sharpen_asm:
 
             paddusw xmm7, xmm8 ; ==> xmm7_low = suma(pixeles_que_no_son_el_central)
 
-            movdqu xmm10, [centro_izq_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
+            movdqa xmm10, xmm13 ; al multiplicar por esta mascara tambien se pone alpha en cero
             movdqu xmm11, xmm1
             pmullw xmm11, xmm10 ; ==> xmm11_high = pixel_central_izquierdo * 9
 
             pslldq xmm7, 8 ; ==> xmm7_high = suma(pixeles_que_no_son_el_central)
             psubusw xmm11, xmm7 ; xmm11_high = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
-            movdqu xmm10, [alphas_saturados]
+            movdqa xmm10, xmm15
             paddusw xmm11, xmm10
 
             ; ----- segundo pixel -----
@@ -203,14 +201,14 @@ Sharpen_asm:
             paddusw xmm7, xmm8 ; ==> xmm7_high = suma(pixeles_que_no_son_el_central)
 
 
-            movdqu xmm10, [centro_der_por_9] ; al multiplicar por esta mascara tambien se pone alpha en cero
+            movdqa xmm10, xmm14 ; al multiplicar por esta mascara tambien se pone alpha en cero
             pmullw xmm5, xmm10 ; ==> xmm1_low = pixel_central_derecho * 9
 
 
             psrldq xmm7, 8 ; ==> xmm7_low = suma(pixeles_que_no_son_el_central)
             psubusw xmm5, xmm7 ; xmm5_low = pixel_central * 9 - suma(pixeles_que_no_son_el_central)
 
-            movdqu xmm10, [alphas_saturados]
+            movdqa xmm10, xmm15
             paddusw xmm5, xmm10
 
             ; ----- escribir ambos pixeles en memoria -----
