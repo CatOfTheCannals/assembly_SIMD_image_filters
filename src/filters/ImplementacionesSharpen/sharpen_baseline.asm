@@ -201,7 +201,7 @@ Sharpen_asm:
             paddusw xmm7, xmm8 ; ==> xmm7_high = suma(pixeles_que_no_son_el_central)
 
 
-            movdqa xmm10, [xmm14 ; al multiplicar por esta mascara tambien se pone alpha en cero
+            movdqa xmm10, xmm14 ; al multiplicar por esta mascara tambien se pone alpha en cero
             pmullw xmm5, xmm10 ; ==> xmm1_low = pixel_central_derecho * 9
 
 
