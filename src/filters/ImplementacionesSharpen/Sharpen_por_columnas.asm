@@ -11,33 +11,34 @@ alphas_saturados: dw  0x0000,0x0000,0x0000,0x00ff,0x0000,0x0000,0x0000,0x00ff
 section .text
 
 %macro map 4
-	;NO USAR RDX COMO PARAMETRO
-	;(i,j) -> i*w*4+j*4
-	; rx i 		    : %1
-	; rx j 		    : %2
-	; rx w          : %3
-	; rx result		: %4
+    ;NO USAR RDX COMO PARAMETRO
+    ;(i,j) -> i*w*4+j*4
+    ; rx i          : %1
+    ; rx j          : %2
+    ; rx w          : %3
+    ; rx result     : %4
 
-	; modifies			: %4
-	push rax
-	push rdx
-	xor rdx,rdx
-	mov rax,%1
-	mul %3
-	pop rdx
-	add rax,%2
-	shl rax,2
-	mov %4,rax
-	pop rax
+    ; modifies          : %4
+    push rax
+    push rdx
+    xor rdx,rdx
+    mov rax,%1
+    mul %3
+    pop rdx
+    add rax,%2
+    shl rax,2
+    mov %4,rax
+    pop rax
 
 %endmacro
+
 
 global Sharpen_asm
 Sharpen_asm:
     ; el loop va a levantar una matriz de 3x4 pixeles, la cual tiene info suficiente para procesar dos pixeles contiguos
     ; para esto se usaran tres registros xmm, uno por cada fila
 
-	push rbp
+    push rbp
     mov rbp,rsp
     push rbx
     push r12
@@ -45,7 +46,7 @@ Sharpen_asm:
     push r14
     push r15
 
-	;rsi dst matriz
+    ;rsi dst matriz
     ;rdi src matriz
     ;edx width en pixeles
     ;ecx height
@@ -56,7 +57,6 @@ Sharpen_asm:
     mov r11, rdx ; r11 = width
     mov r13, rdx ; uso r13 para la macro, pues usa rdx
     mov r14d, dword [black_pixel]
-
     movdqa xmm13,[centro_izq_por_9]
     movdqa xmm14,[centro_der_por_9]
     movdqa xmm15,[alphas_saturados]
@@ -99,35 +99,35 @@ Sharpen_asm:
     .end_vertical_blacks:
     inc r10 ; restaurar r10
 
-    mov rbx, 0 ; rbx es j
+
     sub r10, 2 ; queremos bajar hasta dos pixeles antes del fin
     sub r11, 2 ; queremos ir a la derecha hasta cuatro pixeles antes del fin
-    mov r12, 0 ; r12 es i
+
+    mov rbx, 0 ; rbx es j
     .loop_j:
         cmp rbx,r11 ; j == 1020 ; ojo este comentario esta jarcodeado
         je .fin_j
-        mov r12, 0 ; rbx es j
+
+        mov r12, 0 ; r12 es i
         .loop_i:
             cmp r12, r10 ; i == 637 ; ojo este comentario esta jarcodeado
             je .fin_i
+        
 
             ; leer primera fila: xmm0 = src[i][j:j+4]
             mov r9,r12
             map r9,rbx,r13,r15
             movdqu xmm0,[rdi+r15]
-            movdqu xmm15, xmm0
 
             ; leer segunda fila: xmm1 = src[i+1][j:j+4]
             inc r9
             map r9,rbx,r13,r15
             movdqu xmm1,[rdi+r15]
-            movdqu xmm14, xmm1
 
             ; leer tercera fila: xmm2 = src[i+2][j:j+4]
             inc r9
             map r9,rbx,r13,r15
             movdqu xmm2,[rdi+r15]
-            movdqu xmm13, xmm2
 
             ; unpack primera fila high y low
             pxor xmm4, xmm4
@@ -225,19 +225,18 @@ Sharpen_asm:
             dec r9 ; apuntar a i a fila del medio
             inc rbx ; apuntar a j a segunda columna
             map r9,rbx,r13,r15
-            dec rbx ; reestablecer j
 
             ; dest[i+1][j+1] = pixel_izq
 
             pextrq qword [rsi+r15], xmm11, 0
 
+            dec rbx
             inc r12
             jmp .loop_i
-
         .fin_i:
-            add rbx, 2 ; j += 2 ya que insertamos 2 pixeles por loop
-            jmp .loop_j
-            
+
+        add rbx,2 ; incremento 2 ya que insertamos 2 pixeles por loop, es decir, de a dos columnas
+        jmp .loop_j
     .fin_j:
 
 
@@ -247,4 +246,4 @@ Sharpen_asm:
     pop r12
     pop rbx
     pop rbp
-	ret
+    ret
