@@ -1,4 +1,5 @@
 ## assembly_image_filters
+Series of SIMD assembly implementations, benchmarking versus non-parallel versions.
 
 ### Code
 **Main:** `src/tp2.c`
