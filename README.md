@@ -16,3 +16,8 @@ The files will be saved to `./outputs`.
 `./build/tp2 Ruido ./img/colores32.bmp -i c -o outputs`
 
 `./build/tp2 Sharpen ./img/colores32.bmp -i c -o outputs`
+
+### Performance benchmarks
+Find them in `src/exp/`.
+
+Also in either of the two notebooks you will find a python *class ExpRunner* that lets you run binary code.
